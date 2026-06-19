@@ -16,6 +16,7 @@ struct CPUInfo{
     int threads;
     float clock;
 };
+
 struct GPUInfo{
     std::string model;
     uint64_t vram;
@@ -23,20 +24,21 @@ struct GPUInfo{
     uint64_t cores;
     uint64_t frequency;
 };
+
 struct MemoryInfo{
-    uint64_t totalMB;
-    uint64_t usedMB;
-    uint64_t freeMB;
+    uint64_t total;
+    uint64_t used;
+    uint64_t free;
 }; 
+
 struct DiskInfo{
-    uint64_t totalMB;
-    uint64_t usedMB;
-    uint64_t freeMB;
+    uint64_t total;
 };
+
 struct SystemInfo{
     std::string os;
     std::string kernel;
-    std::string hostname;
+    int bits;
 
     std::vector<CPUInfo> cpu_array;
     std::vector<GPUInfo> gpu_array;
