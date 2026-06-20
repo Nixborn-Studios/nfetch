@@ -16,7 +16,23 @@ set(HWINFO_STATIC ON CACHE BOOL "" FORCE)
 
 add_subdirectory(vendor/hwinfo)
 
-target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(nfetch PRIVATE 
+        "LINKER:--start-group"
+        lfreist-hwinfo::hwinfo
+        hwinfo_cpu 
+        hwinfo_battery 
+        hwinfo_gpu 
+        hwinfo_disk 
+        hwinfo_mainboard 
+        hwinfo_os 
+        hwinfo_ram 
+        hwinfo_network
+        "LINKER:--end-group"
+    )
+else()
+    target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
+endif()
 
 if(MINGW)
     foreach(t hwinfo_cpu hwinfo_battery hwinfo_gpu hwinfo_disk hwinfo_mainboard hwinfo_os hwinfo_ram hwinfo_network)
@@ -26,12 +42,13 @@ if(MINGW)
     endforeach()
 
     if(HWINFO_STATIC)
-    foreach(t hwinfo_cpu hwinfo_battery hwinfo_gpu hwinfo_disk hwinfo_mainboard hwinfo_os hwinfo_ram hwinfo_network)
-        if(TARGET ${t})
-            target_compile_definitions(${t} PRIVATE HWINFO_STATIC_DEFINE)
-        endif()
-    endforeach()
-endif()
+        foreach(t hwinfo_cpu hwinfo_battery hwinfo_gpu hwinfo_disk hwinfo_mainboard hwinfo_os hwinfo_ram hwinfo_network)
+            if(TARGET ${t})
+                target_compile_definitions(${t} PRIVATE HWINFO_STATIC_DEFINE)
+            endif()
+        endforeach()
+        target_compile_definitions(nfetch PRIVATE HWINFO_STATIC_DEFINE)
+    endif()
 endif()
 
 find_package(PkgConfig QUIET)
