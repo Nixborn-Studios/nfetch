@@ -31,26 +31,27 @@ jobs:
         with:
           submodules: recursive
 
-      # Setup vcpkg (Windows only)
+      # Setup vcpkg (MANIFEST MODE - FIX)
       - name: Setup vcpkg
         if: runner.os == 'Windows'
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: ${{ github.workspace }}/vcpkg
+          runVcpkgInstall: true
 
-      # Install Linux dependencies
+      # Linux dependencies
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
 
-      # Configure CMake
-      - name: Configure
+      # Configure
+      - name: Configure CMake
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      # Build project
+      # Build
       - name: Build
         run: |
           cmake --build build
@@ -63,8 +64,8 @@ jobs:
           cp build/${{ matrix.exe }} package/
           cp -r assets package/
 
-      # Create GitHub release
-      - name: Release
+      # GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: package/**
