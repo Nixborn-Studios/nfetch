@@ -4,8 +4,6 @@ project(nfetch LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(BUILD_SHARED_LIBS OFF)
-
 add_executable(nfetch
     src/main.cpp
 )
@@ -25,21 +23,28 @@ target_compile_definitions(hwinfo_ram PRIVATE HWINFO_DISABLE_WARNINGS=1)
 
 target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
 
-find_package(PkgConfig REQUIRED)
+find_package(PkgConfig QUIET)
 
-pkg_check_modules(GLIB QUIET glib-2.0)
+if(PKG_CONFIG_FOUND)
 
-if(GLIB_FOUND)
-    target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
-    target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
+    pkg_check_modules(GLIB QUIET glib-2.0)
+    if(GLIB_FOUND)
+        target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
+        target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
+    endif()
+
+    pkg_check_modules(CHAFA QUIET chafa)
+    if(CHAFA_FOUND)
+        target_include_directories(nfetch PRIVATE ${CHAFA_INCLUDE_DIRS})
+        target_link_libraries(nfetch PRIVATE ${CHAFA_LIBRARIES})
+    endif()
+
 endif()
 
-pkg_check_modules(CHAFA QUIET chafa)
-
-if(CHAFA_FOUND)
-    target_include_directories(nfetch PRIVATE ${CHAFA_INCLUDE_DIRS})
-    target_link_libraries(nfetch PRIVATE ${CHAFA_LIBRARIES})
+if(MINGW OR UNIX)
+    target_compile_options(nfetch PRIVATE
+        -Wno-error=overflow
+        -Wno-error=unknown-pragmas
+        -Wno-error=pragmas
+    )
 endif()
-
-target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
-target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
