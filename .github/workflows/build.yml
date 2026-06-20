@@ -31,14 +31,6 @@ jobs:
         with:
           submodules: recursive
 
-      # Setup vcpkg (MANIFEST MODE - FIX)
-      - name: Setup vcpkg
-        if: runner.os == 'Windows'
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgDirectory: ${{ github.workspace }}/vcpkg
-          runVcpkgInstall: true
-
       # Linux dependencies
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -46,13 +38,29 @@ jobs:
           sudo apt update
           sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
 
-      # Configure
-      - name: Configure CMake
+      # Windows: setup vcpkg manually (NO run-vcpkg)
+      - name: Setup vcpkg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # Configure CMake
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          if ("${{ runner.os }}" -eq "Windows") {
+            cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release `
+              -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          } else {
+            cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          }
 
       # Build
-      - name: Build
+      - name: Build project
         run: |
           cmake --build build
 
