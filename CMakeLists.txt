@@ -7,6 +7,8 @@ add_executable(nfetch
     src/main.cpp
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
+
 target_include_directories(nfetch PRIVATE
     src
     vendor/stb
