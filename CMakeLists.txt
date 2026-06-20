@@ -27,7 +27,12 @@ target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
 
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(GLIB REQUIRED glib-2.0)
+pkg_check_modules(GLIB QUIET glib-2.0)
+
+if(GLIB_FOUND)
+    target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
+    target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
+endif()
 
 pkg_check_modules(CHAFA QUIET chafa)
 
