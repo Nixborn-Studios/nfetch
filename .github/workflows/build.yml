@@ -2,11 +2,6 @@ name: build
 
 on:
   push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: write
 
 jobs:
   linux:
@@ -17,19 +12,31 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/cache@v4
+        with:
+          path: build
+          key: linux-${{ hashFiles('**/CMakeLists.txt') }}
+
       - name: deps
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev libchafa-dev zip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev zip
+
+      - name: optional chafa
+        run: sudo apt-get install -y libchafa-dev || true
+
+      - name: configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: build
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build -j
+        run: cmake --build build -j
 
       - name: package
         run: |
           mkdir -p dist/nfetch-linux/assets
           cp build/nfetch dist/nfetch-linux/ || true
           cp -r assets dist/nfetch-linux/ || true
+          cp -r build/assets dist/nfetch-linux/ || true
           cd dist
           zip -r nfetch-linux.zip nfetch-linux
 
@@ -46,13 +53,20 @@ jobs:
         with:
           submodules: recursive
 
-      - name: install
-        run: choco install cmake ninja zip
+      - uses: actions/cache@v4
+        with:
+          path: build
+          key: windows-${{ hashFiles('**/CMakeLists.txt') }}
+
+      - name: install deps
+        run: |
+          choco install cmake ninja pkgconfiglite -y
+
+      - name: configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: build
-        run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build -j
+        run: cmake --build build -j
 
       - name: package
         shell: bash
@@ -65,7 +79,7 @@ jobs:
           cp build/nfetch_installer.exe dist/nfetch-windows/ || true
           cp build/Release/nfetch_installer.exe dist/nfetch-windows/ || true
 
-          cp -r assets dist/nfetch-windows/
+          cp -r assets dist/nfetch-windows/ || true
 
           cd dist
           7z a nfetch-windows.zip nfetch-windows
@@ -74,23 +88,3 @@ jobs:
         with:
           name: windows
           path: dist/nfetch-windows.zip
-
-  release:
-    needs: [linux, windows]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: windows
-
-      - name: create release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            nfetch-linux.zip
-            nfetch-windows.zip

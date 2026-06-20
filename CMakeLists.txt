@@ -4,6 +4,8 @@ project(nfetch LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(BUILD_SHARED_LIBS OFF)
+
 add_executable(nfetch
     src/main.cpp
 )
@@ -15,14 +17,19 @@ target_include_directories(nfetch PRIVATE
 
 add_subdirectory(vendor/hwinfo)
 
-target_link_libraries(nfetch PRIVATE
-    lfreist-hwinfo::hwinfo
-)
+target_compile_definitions(hwinfo_cpu PRIVATE HWINFO_DISABLE_WARNINGS=1)
+target_compile_definitions(hwinfo_battery PRIVATE HWINFO_DISABLE_WARNINGS=1)
+target_compile_definitions(hwinfo_network PRIVATE HWINFO_DISABLE_WARNINGS=1)
+target_compile_definitions(hwinfo_os PRIVATE HWINFO_DISABLE_WARNINGS=1)
+target_compile_definitions(hwinfo_ram PRIVATE HWINFO_DISABLE_WARNINGS=1)
+
+target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
 
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(CHAFA chafa)
+
+pkg_check_modules(CHAFA QUIET chafa)
 
 if(CHAFA_FOUND)
     target_include_directories(nfetch PRIVATE ${CHAFA_INCLUDE_DIRS})
@@ -31,13 +38,3 @@ endif()
 
 target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
 target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
-
-if(MINGW OR MSYS OR WIN32)
-    add_compile_options(
-        -Wno-error=overflow
-        -Wno-error=unknown-pragmas
-    )
-endif()
-
-install(TARGETS nfetch RUNTIME DESTINATION .)
-install(DIRECTORY assets/ DESTINATION assets)
