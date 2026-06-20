@@ -25,7 +25,7 @@ target_link_libraries(nfetch PRIVATE
     lfreist-hwinfo::hwinfo
 )
 
-# GLIB + CHAFA (Linux only system deps)
+# LINUX SYSTEM DEPS ONLY
 if (UNIX AND NOT APPLE)
 
     find_package(PkgConfig REQUIRED)

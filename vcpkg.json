@@ -1,7 +1,6 @@
 {
   "name": "nfetch",
   "version-string": "1.0.0",
-  "builtin-baseline": "1c0b6b0c1f3c7b6b7f5f2c4c5a8e9d0f12345678",
   "dependencies": [
     "glib",
     "chafa"

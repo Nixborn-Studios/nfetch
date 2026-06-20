@@ -25,20 +25,28 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Checkout repo
+      # Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # Linux dependencies
+      # -----------------------
+      # LINUX DEPS
+      # -----------------------
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
 
-      # Windows: setup vcpkg manually (NO run-vcpkg)
+      # -----------------------
+      # WINDOWS: Ninja + vcpkg
+      # -----------------------
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
       - name: Setup vcpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -46,9 +54,11 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           cd vcpkg
           .\bootstrap-vcpkg.bat
-          echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_ENV
 
-      # Configure CMake
+      # -----------------------
+      # CONFIGURE
+      # -----------------------
       - name: Configure CMake
         shell: pwsh
         run: |
@@ -59,12 +69,15 @@ jobs:
             cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
           }
 
-      # Build
-      - name: Build project
-        run: |
-          cmake --build build
+      # -----------------------
+      # BUILD
+      # -----------------------
+      - name: Build
+        run: cmake --build build
 
-      # Package
+      # -----------------------
+      # PACKAGE
+      # -----------------------
       - name: Package
         shell: bash
         run: |
@@ -72,8 +85,10 @@ jobs:
           cp build/${{ matrix.exe }} package/
           cp -r assets package/
 
-      # GitHub Release
-      - name: Create Release
+      # -----------------------
+      # RELEASE
+      # -----------------------
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: package/**
