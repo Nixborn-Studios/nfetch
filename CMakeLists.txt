@@ -7,7 +7,10 @@ add_executable(nfetch
     src/main.cpp
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
+set(HWINFO_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(HWINFO_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+add_compile_options(-Wno-error)
 
 target_include_directories(nfetch PRIVATE
     src
