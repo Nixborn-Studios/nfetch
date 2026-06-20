@@ -15,7 +15,7 @@ target_include_directories(nfetch PRIVATE
 
 add_subdirectory(vendor/hwinfo)
 
-target_link_libraries(nfetch PRIVATE hwinfo)
+target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
 
 find_package(PkgConfig QUIET)
 
