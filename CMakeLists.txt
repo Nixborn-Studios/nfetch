@@ -7,17 +7,20 @@ add_executable(nfetch
     src/main.cpp
 )
 
-set(HWINFO_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(HWINFO_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-
-add_compile_options(-Wno-error)
-
 target_include_directories(nfetch PRIVATE
     src
     vendor/stb
 )
 
 add_subdirectory(vendor/hwinfo)
+
+target_compile_options(hwinfo_battery PRIVATE
+    -Wno-error
+    -Wno-unknown-pragmas
+    -Wno-pragmas
+    -Wno-overflow
+    -Wno-error=overflow
+)
 
 target_link_libraries(nfetch PRIVATE
     lfreist-hwinfo::hwinfo
