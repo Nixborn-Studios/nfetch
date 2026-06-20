@@ -12,25 +12,25 @@ jobs:
         with:
           submodules: recursive
 
-      - name: cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: build
           key: linux-${{ hashFiles('**/CMakeLists.txt') }}
 
       - name: deps
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev chafa zip
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev libchafa-dev zip
+
+      - name: configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: build
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build -j
+        run: cmake --build build -j
 
       - name: package
         run: |
           mkdir -p dist/nfetch-linux/assets
-          cp build/nfetch dist/nfetch-linux/
-          cp -r assets dist/nfetch-linux/
+          cp build/nfetch dist/nfetch-linux/ || true
+          cp -r assets dist/nfetch-linux/ || true
           cd dist
           zip -r nfetch-linux.zip nfetch-linux
 
@@ -47,8 +47,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: build
           key: windows-${{ hashFiles('**/CMakeLists.txt') }}

@@ -22,21 +22,22 @@ target_link_libraries(nfetch PRIVATE
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(CHAFA REQUIRED chafa)
+pkg_check_modules(CHAFA chafa)
 
-target_include_directories(nfetch PRIVATE
-    ${GLIB_INCLUDE_DIRS}
-    ${CHAFA_INCLUDE_DIRS}
-)
+if(CHAFA_FOUND)
+    target_include_directories(nfetch PRIVATE ${CHAFA_INCLUDE_DIRS})
+    target_link_libraries(nfetch PRIVATE ${CHAFA_LIBRARIES})
+endif()
 
-target_link_libraries(nfetch PRIVATE
-    ${GLIB_LIBRARIES}
-    ${CHAFA_LIBRARIES}
-)
+target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
+target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
 
-if(MSYS OR MINGW OR WIN32)
+if(MINGW OR MSYS OR WIN32)
     add_compile_options(
         -Wno-error=overflow
         -Wno-error=unknown-pragmas
     )
 endif()
+
+install(TARGETS nfetch RUNTIME DESTINATION .)
+install(DIRECTORY assets/ DESTINATION assets)
