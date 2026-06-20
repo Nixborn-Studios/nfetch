@@ -25,32 +25,56 @@ target_link_libraries(nfetch PRIVATE
     lfreist-hwinfo::hwinfo
 )
 
-# PKG-CONFIG (GLIB + CHOFA)
+# GLIB + CHAFA
 
-find_package(PkgConfig REQUIRED)
+if (UNIX AND NOT APPLE)
 
-pkg_check_modules(GLIB REQUIRED glib-2.0)
-pkg_check_modules(CHAFA REQUIRED chafa)
+    find_package(PkgConfig REQUIRED)
 
-target_include_directories(nfetch PRIVATE
-    ${GLIB_INCLUDE_DIRS}
-    ${CHAFA_INCLUDE_DIRS}
-)
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    pkg_check_modules(CHAFA REQUIRED chafa)
 
-target_link_directories(nfetch PRIVATE
-    ${GLIB_LIBRARY_DIRS}
-    ${CHAFA_LIBRARY_DIRS}
-)
+    target_include_directories(nfetch PRIVATE
+        ${GLIB_INCLUDE_DIRS}
+        ${CHAFA_INCLUDE_DIRS}
+    )
 
-target_link_libraries(nfetch PRIVATE
-    ${GLIB_LIBRARIES}
-    ${CHAFA_LIBRARIES}
-)
+    target_link_directories(nfetch PRIVATE
+        ${GLIB_LIBRARY_DIRS}
+        ${CHAFA_LIBRARY_DIRS}
+    )
+
+    target_link_libraries(nfetch PRIVATE
+        ${GLIB_LIBRARIES}
+        ${CHAFA_LIBRARIES}
+    )
+
+elseif (WIN32)
+
+    find_package(PkgConfig REQUIRED)
+
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    pkg_check_modules(CHAFA REQUIRED chafa)
+
+    target_include_directories(nfetch PRIVATE
+        ${GLIB_INCLUDE_DIRS}
+        ${CHAFA_INCLUDE_DIRS}
+    )
+
+    target_link_directories(nfetch PRIVATE
+        ${GLIB_LIBRARY_DIRS}
+        ${CHAFA_LIBRARY_DIRS}
+    )
+
+    target_link_libraries(nfetch PRIVATE
+        ${GLIB_LIBRARIES}
+        ${CHAFA_LIBRARIES}
+    )
+
+endif()
 
 # INSTALLER
 
 add_executable(nfetch_installer
     src/installer.cpp
 )
-
-target_link_libraries(nfetch_installer PRIVATE stdc++fs)

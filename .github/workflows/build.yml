@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
@@ -12,66 +15,58 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact: nfetch-linux
             exe: nfetch
+            asset: nfetch-linux
 
           - os: windows-latest
-            artifact: nfetch-windows
             exe: nfetch.exe
+            asset: nfetch-windows.exe
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Checkout repository including submodules
+      # Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
-      # Cache CMake build directory to speed up compilation
-      - name: Cache build directory
-        uses: actions/cache@v4
+      # Setup vcpkg (Windows only)
+      - name: Setup vcpkg
+        if: runner.os == 'Windows'
+        uses: lukka/run-vcpkg@v11
         with:
-          path: build
-          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-cmake-
+          vcpkgDirectory: ${{ github.workspace }}/vcpkg
 
-      # Install required dependencies on Linux
+      # Install Linux dependencies
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
 
-      # Setup MSVC environment on Windows
-      - name: Setup MSVC environment
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-
-      # Configure the project using CMake + Ninja
-      - name: Configure CMake
+      # Configure CMake
+      - name: Configure
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      # Build the project
-      - name: Build project
+      # Build project
+      - name: Build
         run: |
-          cmake --build build --config Release
+          cmake --build build
 
-      # Prepare build output package
-      - name: Prepare package
+      # Package
+      - name: Package
         shell: bash
         run: |
           mkdir package
-
           cp build/${{ matrix.exe }} package/
           cp -r assets package/
 
-      # Upload build artifacts
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      # Create GitHub release
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ matrix.artifact }}
-          path: package
+          files: package/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
