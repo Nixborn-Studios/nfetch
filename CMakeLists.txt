@@ -11,9 +11,20 @@ target_include_directories(nfetch PRIVATE
     vendor/stb
 )
 
+set(HWINFO_SHARED OFF CACHE BOOL "" FORCE)
+set(HWINFO_STATIC ON CACHE BOOL "" FORCE)
+
 add_subdirectory(vendor/hwinfo)
 
 target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
+
+if(MINGW)
+    foreach(t hwinfo_cpu hwinfo_battery hwinfo_gpu hwinfo_disk hwinfo_mainboard hwinfo_os hwinfo_ram hwinfo_network)
+        if(TARGET ${t})
+            target_compile_options(${t} PRIVATE -Wno-error=unknown-pragmas -Wno-error=pragmas)
+        endif()
+    endforeach()
+endif()
 
 find_package(PkgConfig QUIET)
 
