@@ -2,12 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(nfetch LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-    set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
-endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(nfetch
     src/main.cpp
@@ -39,18 +34,9 @@ target_link_libraries(nfetch PRIVATE
     ${CHAFA_LIBRARIES}
 )
 
-set(INSTALLER_PATH
-    $<IF:$<CONFIG:Release>,
-        ${CMAKE_BINARY_DIR}/Release/nfetch_installer.exe,
-        ${CMAKE_BINARY_DIR}/nfetch_installer.exe
-    >
-)
-
-add_custom_target(package_zip ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory package
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:nfetch> package/nfetch.exe
-    COMMAND ${CMAKE_COMMAND} -E copy ${INSTALLER_PATH} package/installer.exe
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets package/assets
-    COMMAND ${CMAKE_COMMAND} -E tar "cfv" nfetch.zip --format=zip package
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
+if(MSYS OR MINGW OR WIN32)
+    add_compile_options(
+        -Wno-error=overflow
+        -Wno-error=unknown-pragmas
+    )
+endif()

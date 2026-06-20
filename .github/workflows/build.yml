@@ -2,61 +2,83 @@ name: build
 
 on:
   push:
-  pull_request:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
-    runs-on: ${{ matrix.os }}
+  linux:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Cache build
+      - name: cache
         uses: actions/cache@v4
         with:
-          path: |
-            build
-            ~/.cache
-            ~/.ccache
-          key: ${{ runner.os }}-nfetch-${{ hashFiles('**/CMakeLists.txt') }}
+          path: build
+          key: linux-${{ hashFiles('**/CMakeLists.txt') }}
 
-      - name: Install deps (Linux)
-        if: runner.os == 'Linux'
+      - name: deps
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev chafa zip
+
+      - name: build
         run: |
-          sudo apt update
-          sudo apt install -y cmake g++ pkg-config libglib2.0-dev libchafa-dev ccache
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
 
-      - name: Setup MSYS2
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+      - name: package
+        run: |
+          mkdir -p dist/nfetch-linux/assets
+          cp build/nfetch dist/nfetch-linux/
+          cp -r assets dist/nfetch-linux/
+          cd dist
+          zip -r nfetch-linux.zip nfetch-linux
+
+      - uses: actions/upload-artifact@v4
         with:
-          msystem: MINGW64
-          install: >
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-pkgconf
-            mingw-w64-x86_64-glib2
-            mingw-w64-x86_64-chafa
-            ccache
+          name: linux
+          path: dist/nfetch-linux.zip
 
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+  windows:
+    runs-on: windows-latest
 
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Package
-        run: cmake --build build --target package_zip
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: nfetch-${{ runner.os }}
-          path: build/nfetch.zip
+          submodules: recursive
+
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: windows-${{ hashFiles('**/CMakeLists.txt') }}
+
+      - name: install
+        run: choco install cmake ninja zip
+
+      - name: configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: build
+        run: cmake --build build -j
+
+      - name: package
+        shell: bash
+        run: |
+          mkdir -p dist/nfetch-windows/assets
+
+          cp build/nfetch.exe dist/nfetch-windows/ || true
+          cp build/Release/nfetch.exe dist/nfetch-windows/ || true
+
+          cp build/nfetch_installer.exe dist/nfetch-windows/ || true
+          cp build/Release/nfetch_installer.exe dist/nfetch-windows/ || true
+
+          cp -r assets dist/nfetch-windows/
+
+          cd dist
+          7z a nfetch-windows.zip nfetch-windows
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/nfetch-windows.zip
