@@ -24,6 +24,18 @@ endif()
 # VENDOR
 add_subdirectory(vendor/hwinfo)
 
+if(MINGW OR MSYS)
+    foreach(tgt hwinfo hwinfo_cpu hwinfo_battery)
+        if(TARGET ${tgt})
+            target_compile_options(${tgt} PRIVATE
+                -Wno-error
+                -Wno-error=overflow
+                -Wno-unknown-pragmas
+            )
+        endif()
+    endforeach()
+endif()
+
 target_link_libraries(nfetch PRIVATE hwinfo)
 
 # PkgConfig (Linux/MSYS2)
