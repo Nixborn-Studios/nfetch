@@ -9,6 +9,10 @@ add_executable(nfetch
 )
 target_include_directories(nfetch PRIVATE src vendor/stb)
 
+set(BUILD_SHARED_LIBS OFF)
+set(HWINFO_SHARED OFF CACHE BOOL "" FORCE)
+set(HWINFO_STATIC ON CACHE BOOL "" FORCE)
+
 add_subdirectory(vendor/hwinfo)
 target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
 
