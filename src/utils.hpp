@@ -2,7 +2,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #include <stb_image.h>
-#include <globals.hpp>
+#include "globals.hpp"
+#include <chafa.h>
 #include <thread>
 #include <iostream>
 #include <vector>

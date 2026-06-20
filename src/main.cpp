@@ -4,7 +4,7 @@
 #ifdef HAVE_CHAFA
   #include <chafa.h>
 #endif
-#include <globals.hpp>
+#include "globals.hpp"
 #include <utils.hpp>
 
 int main()
