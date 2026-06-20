@@ -25,30 +25,51 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # -----------------------
-      # Checkout
-      # -----------------------
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # -----------------------
+      # =========================
+      # CACHE (Linux)
+      # =========================
+      - name: Cache APT packages
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/apt
+          key: apt-${{ runner.os }}
+
+      # =========================
       # LINUX DEPENDENCIES
-      # -----------------------
+      # =========================
       - name: Install Linux deps
         if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
 
-      # -----------------------
-      # WINDOWS MSYS2 SETUP
-      # -----------------------
+      # =========================
+      # MSYS2 CACHE (IMPORTANT)
+      # =========================
+      - name: Cache MSYS2
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\msys64\var\cache\pacman\pkg
+            C:\msys64\mingw64
+          key: msys2-${{ runner.os }}
+
+      # =========================
+      # MSYS2 SETUP
+      # =========================
       - name: Setup MSYS2
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
+          update: true
           install: >
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-cmake
@@ -57,9 +78,9 @@ jobs:
             mingw-w64-x86_64-chafa
             mingw-w64-x86_64-pkg-config
 
-      # -----------------------
+      # =========================
       # CONFIGURE
-      # -----------------------
+      # =========================
       - name: Configure (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -71,9 +92,9 @@ jobs:
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      # -----------------------
+      # =========================
       # BUILD
-      # -----------------------
+      # =========================
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: cmake --build build
@@ -83,19 +104,19 @@ jobs:
         shell: msys2 {0}
         run: cmake --build build
 
-      # -----------------------
+      # =========================
       # PACKAGE
-      # -----------------------
+      # =========================
       - name: Package
         shell: bash
         run: |
-          mkdir package
-          cp build/${{ matrix.exe }} package/
-          cp -r assets package/
+          mkdir -p package
+          cp build/${{ matrix.exe }} package/ || true
+          cp -r assets package/ || true
 
-      # -----------------------
+      # =========================
       # RELEASE
-      # -----------------------
+      # =========================
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:

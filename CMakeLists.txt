@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(nfetch LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(nfetch
     src/main.cpp
@@ -12,21 +13,20 @@ target_include_directories(nfetch PRIVATE
     vendor/stb
 )
 
+# MSYS2 / MinGW FIXES
+if(MINGW OR MSYS OR WIN32)
+    add_compile_options(
+        -Wno-error
+        -Wno-unknown-pragmas
+        -Wno-pragmas
+    )
+endif()
+# VENDOR
 add_subdirectory(vendor/hwinfo)
 
-target_compile_options(hwinfo_battery PRIVATE
-    -Wno-error
-    -Wno-unknown-pragmas
-    -Wno-pragmas
-    -Wno-overflow
-    -Wno-error=overflow
-)
+target_link_libraries(nfetch PRIVATE hwinfo)
 
-target_link_libraries(nfetch PRIVATE
-    lfreist-hwinfo::hwinfo
-)
-
-# Linux + MSYS2 shared pkg-config stack
+# PkgConfig (Linux/MSYS2)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(GLIB REQUIRED glib-2.0)
