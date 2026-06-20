@@ -1,26 +1,14 @@
-name: NFetch Build
+name: build
 
 on:
   push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: write
+  pull_request:
 
 jobs:
   build:
     strategy:
-      fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            exe: nfetch
-            asset: nfetch-linux
-
-          - os: windows-latest
-            exe: nfetch.exe
-            asset: nfetch-windows.exe
+        os: [ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -29,97 +17,46 @@ jobs:
         with:
           submodules: recursive
 
-      # =========================
-      # CACHE (Linux)
-      # =========================
-      - name: Cache APT packages
-        if: runner.os == 'Linux'
+      - name: Cache build
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cache/apt
-          key: apt-${{ runner.os }}
+            build
+            ~/.cache
+            ~/.ccache
+          key: ${{ runner.os }}-nfetch-${{ hashFiles('**/CMakeLists.txt') }}
 
-      # =========================
-      # LINUX DEPENDENCIES
-      # =========================
-      - name: Install Linux deps
+      - name: Install deps (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt update
-          sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
+          sudo apt install -y cmake g++ pkg-config libglib2.0-dev libchafa-dev ccache
 
-      # =========================
-      # MSYS2 CACHE (IMPORTANT)
-      # =========================
-      - name: Cache MSYS2
-        if: runner.os == 'Windows'
-        uses: actions/cache@v4
-        with:
-          path: |
-            C:\msys64\var\cache\pacman\pkg
-            C:\msys64\mingw64
-          key: msys2-${{ runner.os }}
-
-      # =========================
-      # MSYS2 SETUP
-      # =========================
       - name: Setup MSYS2
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          update: true
           install: >
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-glib2
             mingw-w64-x86_64-chafa
-            mingw-w64-x86_64-pkg-config
+            ccache
 
-      # =========================
-      # CONFIGURE
-      # =========================
-      - name: Configure (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Configure (Windows MSYS2)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
 
-      # =========================
-      # BUILD
-      # =========================
-      - name: Build (Linux)
-        if: runner.os == 'Linux'
-        run: cmake --build build
-
-      - name: Build (Windows MSYS2)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: cmake --build build
-
-      # =========================
-      # PACKAGE
-      # =========================
       - name: Package
-        shell: bash
-        run: |
-          mkdir -p package
-          cp build/${{ matrix.exe }} package/ || true
-          cp -r assets package/ || true
+        run: cmake --build build --target package_zip
 
-      # =========================
-      # RELEASE
-      # =========================
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: package/**
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: nfetch-${{ runner.os }}
+          path: build/nfetch.zip
