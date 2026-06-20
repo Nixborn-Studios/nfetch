@@ -4,6 +4,3 @@
 [submodule "vendor/stb"]
 	path = vendor/stb
 	url = https://github.com/nothings/stb
-[submodule "vendor/hwinfo"]
-	path = vendor/hwinfo
-	url = https://github.com/lfreist/hwinfo
