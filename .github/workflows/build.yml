@@ -56,11 +56,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
+      # POPRAWKA WINDOWS: Dodano kompilator mingw-w64-x86_64-gcc do instalacji
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           update: true
           install: >-
+            mingw-w64-x86_64-gcc
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-chafa

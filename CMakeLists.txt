@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.24)
 project(nfetch LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -18,7 +18,7 @@ add_subdirectory(vendor/hwinfo)
 
 if(UNIX AND NOT APPLE)
     target_link_libraries(nfetch PRIVATE 
-        -Wl,--start-group
+        "LINKER:--start-group"
         lfreist-hwinfo::hwinfo
         hwinfo_cpu 
         hwinfo_battery 
@@ -28,7 +28,7 @@ if(UNIX AND NOT APPLE)
         hwinfo_os 
         hwinfo_ram 
         hwinfo_network
-        -Wl,--end-group
+        "LINKER:--end-group"
     )
 else()
     target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
