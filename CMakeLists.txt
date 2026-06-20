@@ -15,12 +15,11 @@ target_include_directories(nfetch PRIVATE
 
 add_subdirectory(vendor/hwinfo)
 
-target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
+target_link_libraries(nfetch PRIVATE hwinfo)
 
 find_package(PkgConfig QUIET)
 
-if(PKG_CONFIG_FOUND)
-
+if(PkgConfig_FOUND)
     pkg_check_modules(GLIB QUIET glib-2.0)
     if(GLIB_FOUND)
         target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
@@ -32,19 +31,21 @@ if(PKG_CONFIG_FOUND)
         target_include_directories(nfetch PRIVATE ${CHAFA_INCLUDE_DIRS})
         target_link_libraries(nfetch PRIVATE ${CHAFA_LIBRARIES})
     endif()
-
 endif()
 
-if(MINGW OR MSYS OR WIN32)
-    add_compile_options(
+if(MINGW OR WIN32)
+    target_compile_options(nfetch PRIVATE
         -Wno-error
         -Wno-unknown-pragmas
         -Wno-pragmas
         -Wno-missing-field-initializers
-        -Wno-error=overflow
     )
 endif()
 
-if(MSVC)
-    add_compile_options(/W4)
+if(UNIX)
+    target_compile_options(nfetch PRIVATE
+        -Wno-error
+        -Wno-unknown-pragmas
+        -Wno-pragmas
+    )
 endif()
