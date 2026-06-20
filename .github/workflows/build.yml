@@ -56,12 +56,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-      - run: choco install cmake ninja zip -y
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-chafa
+            mingw-w64-x86_64-pkg-config
+            zip
 
-      - run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-      - run: cmake --build build -j
+      - name: Configure and Build
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
 
-      - shell: bash
+      - name: Package
+        shell: msys2 {0}
         run: |
           mkdir -p dist/nfetch-windows/assets
           cp build/nfetch.exe dist/nfetch-windows/ || true

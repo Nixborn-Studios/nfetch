@@ -18,7 +18,7 @@ add_subdirectory(vendor/hwinfo)
 
 if(UNIX AND NOT APPLE)
     target_link_libraries(nfetch PRIVATE 
-        "LINKER:--start-group"
+        -Wl,--start-group
         lfreist-hwinfo::hwinfo
         hwinfo_cpu 
         hwinfo_battery 
@@ -28,7 +28,7 @@ if(UNIX AND NOT APPLE)
         hwinfo_os 
         hwinfo_ram 
         hwinfo_network
-        "LINKER:--end-group"
+        -Wl,--end-group
     )
 else()
     target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
@@ -58,12 +58,14 @@ if(PKG_CONFIG_FOUND)
     if(GLIB_FOUND)
         target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
         target_link_libraries(nfetch PRIVATE ${GLIB_LIBRARIES})
+        target_compile_definitions(nfetch PRIVATE HAVE_GLIB)
     endif()
 
     pkg_check_modules(CHAFA QUIET chafa)
     if(CHAFA_FOUND)
         target_include_directories(nfetch PRIVATE ${CHAFA_INCLUDE_DIRS})
         target_link_libraries(nfetch PRIVATE ${CHAFA_LIBRARIES})
+        target_compile_definitions(nfetch PRIVATE HAVE_CHAFA)
     endif()
 endif()
 
