@@ -4,9 +4,7 @@ project(nfetch LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(nfetch
-    src/main.cpp
-)
+add_executable(nfetch src/main.cpp)
 
 target_include_directories(nfetch PRIVATE
     src
@@ -19,7 +17,7 @@ target_link_libraries(nfetch PRIVATE lfreist-hwinfo::hwinfo)
 
 find_package(PkgConfig QUIET)
 
-if(PkgConfig_FOUND)
+if(PKG_CONFIG_FOUND)
     pkg_check_modules(GLIB QUIET glib-2.0)
     if(GLIB_FOUND)
         target_include_directories(nfetch PRIVATE ${GLIB_INCLUDE_DIRS})
@@ -33,19 +31,11 @@ if(PkgConfig_FOUND)
     endif()
 endif()
 
-if(MINGW OR WIN32)
+if(MINGW OR UNIX)
     target_compile_options(nfetch PRIVATE
         -Wno-error
         -Wno-unknown-pragmas
         -Wno-pragmas
         -Wno-missing-field-initializers
-    )
-endif()
-
-if(UNIX)
-    target_compile_options(nfetch PRIVATE
-        -Wno-error
-        -Wno-unknown-pragmas
-        -Wno-pragmas
     )
 endif()
