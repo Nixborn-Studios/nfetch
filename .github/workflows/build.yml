@@ -5,6 +5,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   linux:
     runs-on: ubuntu-latest
@@ -13,6 +16,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', 'vendor/hwinfo/**/CMakeLists.txt', 'src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - run: sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev libchafa-dev zip
 
@@ -39,6 +49,13 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', 'vendor/hwinfo/**/CMakeLists.txt', 'src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
       - run: choco install cmake ninja zip -y
 
       - run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -51,9 +68,25 @@ jobs:
           cp build/nfetch_installer.exe dist/nfetch-windows/ || true
           cp -r assets dist/nfetch-windows/
           cd dist
-          7z a nfetch-windows.zip nfetch-windows
+          zip -r nfetch-windows.zip nfetch-windows
 
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: dist/nfetch-windows.zip
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            dist/linux/nfetch-linux.zip
+            dist/windows/nfetch-windows.zip
