@@ -2,6 +2,11 @@ name: build
 
 on:
   push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   linux:
@@ -12,19 +17,13 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: actions/cache@v4
-        with:
-          path: build
-          key: linux-${{ hashFiles('**/CMakeLists.txt') }}
-
       - name: deps
         run: sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config libglib2.0-dev libchafa-dev zip
 
-      - name: configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-
       - name: build
-        run: cmake --build build -j
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
 
       - name: package
         run: |
@@ -47,19 +46,13 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: actions/cache@v4
-        with:
-          path: build
-          key: windows-${{ hashFiles('**/CMakeLists.txt') }}
-
       - name: install
         run: choco install cmake ninja zip
 
-      - name: configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-
       - name: build
-        run: cmake --build build -j
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
 
       - name: package
         shell: bash
@@ -81,3 +74,23 @@ jobs:
         with:
           name: windows
           path: dist/nfetch-windows.zip
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows
+
+      - name: create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            nfetch-linux.zip
+            nfetch-windows.zip
