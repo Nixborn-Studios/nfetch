@@ -1,0 +1,77 @@
+name: NFetch Build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: nfetch-linux
+            exe: nfetch
+
+          - os: windows-latest
+            artifact: nfetch-windows
+            exe: nfetch.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Checkout repository including submodules
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      # Cache CMake build directory to speed up compilation
+      - name: Cache build directory
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-
+
+      # Install required dependencies on Linux
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y cmake ninja-build pkg-config libglib2.0-dev libchafa-dev
+
+      # Setup MSVC environment on Windows
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # Configure the project using CMake + Ninja
+      - name: Configure CMake
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      # Build the project
+      - name: Build project
+        run: |
+          cmake --build build --config Release
+
+      # Prepare build output package
+      - name: Prepare package
+        shell: bash
+        run: |
+          mkdir package
+
+          cp build/${{ matrix.exe }} package/
+          cp -r assets package/
+
+      # Upload build artifacts
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: package

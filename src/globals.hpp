@@ -1,9 +1,47 @@
 #pragma once
-#include <chafa.h>
+#include <filesystem>
 
-const char* nixborn_logo = "./assets/nixborn.png";
-const char* windows_logo = "./assets/windows.png";
-const char* linux_logo = "./assets/linux.png";
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <cstdlib>
+#endif
+
+namespace fs = std::filesystem;
+
+static fs::path GetExecutableDir()
+{
+#ifdef _WIN32
+    char Buffer[MAX_PATH];
+    GetModuleFileNameA(nullptr, Buffer, MAX_PATH);
+    return fs::path(Buffer).parent_path();
+
+#else
+    char Buffer[4096];
+
+    ssize_t Length = readlink("/proc/self/exe", Buffer, sizeof(Buffer) - 1);
+
+    if (Length == -1)
+        return fs::current_path();
+
+    Buffer[Length] = '\0';
+
+    return fs::path(Buffer).parent_path();
+#endif
+}
+
+static fs::path GetAssetsPath()
+{
+#ifdef _WIN32
+    return GetExecutableDir() / "assets";
+#else
+    return fs::path("/usr/share/nfetch/assets");
+#endif
+}
+
+auto assets = GetAssetsPath();
+auto nixborn_logo = (assets / "nixborn.png").string();
 
 typedef struct {
     int w, h, c;

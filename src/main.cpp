@@ -7,7 +7,7 @@
 
 int main()
 {
-    STBImageReturn* nixborn_img = NFETCH::LoadImage(nixborn_logo);
+    STBImageReturn* nixborn_img = NFETCH::LoadImage(nixborn_logo.c_str());
     NFETCH::PrintNixbornStyle(nixborn_img, 30, 15);
 
     delete nixborn_img;
